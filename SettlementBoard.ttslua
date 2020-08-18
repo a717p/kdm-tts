@@ -6,6 +6,7 @@ local Zone = require("Kdm/Zone")
 local Ui = require("Kdm/Ui3d")
 local Location = require("Kdm/Location")
 local NamedObject = require("Kdm/NamedObject")
+local EventManager = require("Kdm/EventManager")
 
 local Archive = nil
 
@@ -141,6 +142,73 @@ end
 
 ---------------------------------------------------------------------------------------------------
 
+-- Atomatically reset settlement gear decks if cards are removed.
+local AUTO_RESET_GEAR = { "Starting Gear", "Rare Gear", "Promo Gear" }
+local searchWindowOpen = {}
+local markedForReset = {}
+
+local function SettlementBoard_OnSearchWindowOpen(container, player_color)
+    local type = container.getGMNotes()
+    local containerName = container.getName()
+
+    if Util.ArrayContains(AUTO_RESET_GEAR, containerName) or type == "Gear" then
+        table.insert(searchWindowOpen, containerName)
+    end
+end
+
+local function SettlementBoard_OnSearchWindowClose(container, player_color)
+    local type = container.getGMNotes()
+    local containerName = container.getName()
+
+    if type == "Gear" then
+        local index = Util.getIndex(searchWindowOpen, containerName)
+        table.remove(searchWindowOpen, index)
+
+        if (not Util.ArrayContains(searchWindowOpen, containerName)) and (markedForReset[containerName] == true) then
+            Wait.time(function()
+                markedForReset[containerName] = nil
+                if Util.ArrayContains(AUTO_RESET_GEAR, containerName) then
+                    SettlementBoard_ResetGear(containerName, containerName)
+                else
+                    local locationName = Zone.LocationsAtPosition(container.getPosition())[1].name
+                    local locationIndex = tonumber(Util.Split(locationName, "Settlement Location Gear ")[1])
+                    SettlementBoard_ResetSlocGear(locationIndex)
+                end
+                return 1
+            end, 1)
+        end
+    end
+end
+
+local function SettlementBoard_onObjectLeaveContainer(container, object)
+    local type = container.getGMNotes()
+    local containerName = container.getName()
+
+    if Util.ArrayContains(AUTO_RESET_GEAR, containerName) then
+        if not Util.ArrayContains(searchWindowOpen, containerName) then
+            Wait.time(function()
+                SettlementBoard_ResetGear(containerName, containerName)
+                return 1
+            end, 1)
+        else
+            markedForReset[containerName] = true
+        end
+    elseif type == "Gear" then
+        if not Util.ArrayContains(searchWindowOpen, containerName) then
+            local locationName = Zone.LocationsAtPosition(container.getPosition())[1].name
+            local locationIndex = tonumber(Util.Split(locationName, "Settlement Location Gear ")[1])
+            Wait.time(function()
+                SettlementBoard_ResetSlocGear(locationIndex)
+                return 1
+            end, 1)
+        else
+            markedForReset[containerName] = true
+        end
+    end
+end
+
+---------------------------------------------------------------------------------------------------
+
 function Settlement_PostInit()
     for i = 1, Location.MAX_SETTLEMENT_LOCATION_LOCATIONS do
         Zone.AddHandler({
@@ -149,6 +217,9 @@ function Settlement_PostInit()
             pickUpHandler = function(object) SettlementBoard_OnPickUp(i, object) end,
         })
     end
+    EventManager.AddHandler("onObjectSearchStart", SettlementBoard_OnSearchWindowOpen)
+    EventManager.AddHandler("onObjectSearchEnd", SettlementBoard_OnSearchWindowClose)
+    EventManager.AddHandler("onObjectLeaveContainer", SettlementBoard_onObjectLeaveContainer)
 end
 
 ---------------------------------------------------------------------------------------------------
