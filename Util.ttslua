@@ -333,5 +333,17 @@ function Util.DeepCopy(source)
 end
 
 ---------------------------------------------------------------------------------------------------
+-- Returns the index of an element within an array, or nil if the array does not contain it.
+function Util.getIndex(array, value)
+    local index = nil
+    for i, v in ipairs (array) do
+        if (v == value) then
+          index = i
+        end
+    end
+    return index
+end
+
+---------------------------------------------------------------------------------------------------
 
 return Util
