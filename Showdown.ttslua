@@ -896,6 +896,52 @@ function Showdown_OnObjectCollisionEnter(object, collisionInfo)
 end
 
 ---------------------------------------------------------------------------------------------------
+-- card decks to automatically reset
+local AUTO_RESET_DECKS = {"Abilities", "Fighting Arts", "Secret Fighting Arts", "Disorders",
+"Severe Injuries", "Tactics", "Weapon Proficiencies", "Armor Sets"}
+local searchWindowOpen = {}
+local markedForReset = {}
+
+-- Records opened search windows (of auto reset decks) to table.
+local function Showdown_OnSearchWindowOpen(container, player_color)
+    local type = container.getGMNotes()
+
+    if Util.ArrayContains(AUTO_RESET_DECKS, type) then
+        table.insert(searchWindowOpen, type)
+    end
+end
+
+-- Resets deck if the last search window of the deck is closed and a card had been removed.
+local function Showdown_OnSearchWindowClose(container, player_color)
+    local type = container.getGMNotes()
+
+    if Util.ArrayContains(AUTO_RESET_DECKS, type) then
+        local index = Util.getIndex(searchWindowOpen, type)
+        table.remove(searchWindowOpen, index)
+
+        if (not Util.ArrayContains(searchWindowOpen, type)) and (markedForReset[type] == true) then
+            Showdown_ResetDeck(type)
+            markedForReset[type] = nil
+        end
+    end
+end
+
+-- Resets deck after a card has been drawn.
+local function Showdown_onObjectLeaveContainer(container, object)
+    local type = container.getGMNotes()
+    if Util.ArrayContains(AUTO_RESET_DECKS, type) then
+        -- mark decks with removed cards during search
+        markedForReset[type] = true
+        -- don't reset as long as a player is searching through the deck, as it would forcefully
+        -- close the search window
+        if not Util.ArrayContains(searchWindowOpen, type) then
+            Wait.time(function()
+                Showdown_ResetDeck(type)
+                return 1
+            end, 1)
+        end
+    end
+end
 
 local function Showdown_PostInit()
     Zone.AddHandler({
@@ -907,6 +953,9 @@ local function Showdown_PostInit()
     EventManager.AddHandler("onObjectCollisionEnter", Showdown_OnObjectCollisionEnter)
     EventManager.AddHandler("onObjectPickUp", Showdown_OnObjectPickUp)
     EventManager.AddHandler("onObjectDrop", Showdown_OnObjectDrop)
+    EventManager.AddHandler("onObjectSearchStart", Showdown_OnSearchWindowOpen)
+    EventManager.AddHandler("onObjectSearchEnd", Showdown_OnSearchWindowClose)
+    EventManager.AddHandler("onObjectLeaveContainer", Showdown_onObjectLeaveContainer)
 end
 
 ---------------------------------------------------------------------------------------------------
