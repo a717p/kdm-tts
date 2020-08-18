@@ -930,8 +930,6 @@ end
 local function Showdown_onObjectLeaveContainer(container, object)
     local type = container.getGMNotes()
     if Util.ArrayContains(AUTO_RESET_DECKS, type) then
-        -- mark decks with removed cards during search
-        markedForReset[type] = true
         -- don't reset as long as a player is searching through the deck, as it would forcefully
         -- close the search window
         if not Util.ArrayContains(searchWindowOpen, type) then
@@ -939,6 +937,10 @@ local function Showdown_onObjectLeaveContainer(container, object)
                 Showdown_ResetDeck(type)
                 return 1
             end, 1)
+        else
+            -- mark decks with removed cards during search
+            markedForReset[type] = true
+            print(Util.TabStr(markedForReset))
         end
     end
 end
