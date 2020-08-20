@@ -115,7 +115,7 @@ function BattleUi.InitUi(ui)
 
         player.turnEnded = false
         Ui.Image(player.panel, { id = "EndTurn", rectAlignment = "UpperLeft", x = 324, y = -8, width = 48, height = 25, image = "BR_Sleep" })
-        player.endTurnButton = Ui.Button(player.panel, { id = "EndTurn", rectAlignment = "UpperLeft", x = 324-1, y = -8+1, width = 48+2, height = 25+2, colors = DARK_COLORS, onClick = function()
+        player.endTurnButton = Ui.Button(player.panel, { id = "EndTurn", rectAlignment = "UpperLeft", x = 35-1, y = -8+1, width = 338+2, height = 25+2, colors = DARK_COLORS, onClick = function()
             player.turnEnded = not player.turnEnded
             if player.turnEnded then
                 Log.Printf("Player %d: %s turn ended", playerNumber, playerBoard:Survivor():NameOrUnnamed())
