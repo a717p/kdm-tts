@@ -207,6 +207,14 @@ local function SettlementBoard_onObjectLeaveContainer(container, object)
     end
 end
 
+local function SettlementBoard_onObjectEnterContainer(container, object)
+    local type = container.getGMNotes()
+
+    if type == "Settlement Events" then
+        container.shuffle()
+    end
+end
+
 ---------------------------------------------------------------------------------------------------
 
 function Settlement_PostInit()
@@ -220,6 +228,7 @@ function Settlement_PostInit()
     EventManager.AddHandler("onObjectSearchStart", SettlementBoard_OnSearchWindowOpen)
     EventManager.AddHandler("onObjectSearchEnd", SettlementBoard_OnSearchWindowClose)
     EventManager.AddHandler("onObjectLeaveContainer", SettlementBoard_onObjectLeaveContainer)
+    EventManager.AddHandler("onObjectEnterContainer", SettlementBoard_onObjectEnterContainer)
 end
 
 ---------------------------------------------------------------------------------------------------
