@@ -958,6 +958,17 @@ local function Showdown_PostInit()
     EventManager.AddHandler("onObjectSearchStart", Showdown_OnSearchWindowOpen)
     EventManager.AddHandler("onObjectSearchEnd", Showdown_OnSearchWindowClose)
     EventManager.AddHandler("onObjectLeaveContainer", Showdown_onObjectLeaveContainer)
+    EventManager.AddHandler("onHuntStart", Showdown_resetResources)
+end
+
+---------------------------------------------------------------------------------------------------
+
+-- Resets the resource decks.
+local resourcesToReset = {"Vermin", "Strange Resources", "Basic Resources"}
+function Showdown_resetResources()
+    for _, resource in ipairs(resourcesToReset) do
+        Showdown_ResetDeck(resource)
+    end
 end
 
 ---------------------------------------------------------------------------------------------------
