@@ -252,7 +252,8 @@ function BattleUi.CalcWeapons(playerBoard, survivor)
     for _, weapon in ipairs(weapons) do
         local name, stats = weapon.name, weapon.stats
 
-        local speed = stats.speed + survivorSpeed
+        -- glossary: "A monster or survivor attack with less than one speed still has one attack roll."
+        local speed = Util.Max(stats.speed + survivorSpeed, 1)
         -- accuracy goes the opposite way
         local accuracy = stats.accuracy - survivorAccuracy
         local strength = stats.strength + survivorStrength
