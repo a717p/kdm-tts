@@ -219,6 +219,9 @@ function Ui_Counter(params)
     assert(CheckNum(value))
     assert(CheckFunc(onValueChanged))
 
+    -- 2 = +/- buttons, 1 = single button with left/right mouse click for +1/-1
+    local counterStyle = params.counterStyle or 2
+
     local id = object.getGUID().."_"..id.."Counter"
     Log.Debugf("Creating Counter %s", id)
 
@@ -255,49 +258,72 @@ function Ui_Counter(params)
         hover_color = params.hover_color or UI_BACKGROUND_COLOR,
         press_color = params.press_color or UI_BACKGROUND_COLOR,
         font_color = params.font_color or UI_LIGHT_BROWN,
-        font_size = 1000,
+        font_size = params.font_size or 1000,
         click_function = "Ui3d_Dud",
         function_owner = self,
     }
     object.createButton(counter.text.params)
 
     local clickFunctionName = counter.minusButton.id.."_OnClick"
-    self.setVar(clickFunctionName, function(_, _, altClick)
-        counter.onValueChanged(altClick and -10 or -1)
-    end)
-    local index = Ui_RecordButtonAndGetIndex(object)
-    counter.minusButton.params = {
-        index = index,
-        position = { x = -Util.Lerp(tl.x, br.x, 0.25), y = params.y or UI_Y, z = y },
-        scale = { x = scale, y = scale, z = scale },
-        width = width / 2,
-        height = height,
-        color = params.color or UI_BACKGROUND_COLOR,
-        hover_color = params.hover_color or UI_HOVER_COLOR,
-        press_color = params.press_color or UI_PRESS_COLOR,
-        click_function = clickFunctionName,
-        function_owner = self,
-    }
-    object.createButton(counter.minusButton.params)
 
-    local clickFunctionName = counter.plusButton.id.."_OnClick"
-    self.setVar(clickFunctionName, function(_, _, altClick)
-        counter.onValueChanged(altClick and 10 or 1)
-    end)
-    local index = Ui_RecordButtonAndGetIndex(object)
-    counter.plusButton.params = {
-        index = index,
-        position = { x = -Util.Lerp(tl.x, br.x, 0.75), y = params.y or UI_Y, z = y },
-        scale = { x = scale, y = scale, z = scale },
-        width = width / 2,
-        height = height,
-        color = params.color or UI_BACKGROUND_COLOR,
-        hover_color = params.hover_color or UI_HOVER_COLOR,
-        press_color = params.press_color or UI_PRESS_COLOR,
-        click_function = clickFunctionName,
-        function_owner = self,
-    }
-    object.createButton(counter.plusButton.params)
+    if (counterStyle == 1) then
+        self.setVar(clickFunctionName, function(_, _, altClick)
+            counter.onValueChanged(altClick and -1 or 1)
+        end)
+
+        local index = Ui_RecordButtonAndGetIndex(object)
+        counter.minusButton.params = {
+            index = index,
+            position = { x = x, y = params.y or UI_Y, z = Util.Lerp(tl.y, br.y, 0.7) },
+            scale = { x = scale, y = scale, z = scale },
+            width = width,
+            height = height,
+            color = params.color or UI_BACKGROUND_COLOR,
+            hover_color = params.hover_color or UI_HOVER_COLOR,
+            press_color = params.press_color or UI_PRESS_COLOR,
+            click_function = clickFunctionName,
+            function_owner = self,
+        }
+        object.createButton(counter.minusButton.params)
+    else
+        self.setVar(clickFunctionName, function(_, _, altClick)
+            counter.onValueChanged(altClick and -10 or -1)
+        end)
+
+        local index = Ui_RecordButtonAndGetIndex(object)
+        counter.minusButton.params = {
+            index = index,
+            position = { x = -Util.Lerp(tl.x, br.x, 0.25), y = params.y or UI_Y, z = y },
+            scale = { x = scale, y = scale, z = scale },
+            width = width / 2,
+            height = height,
+            color = params.color or UI_BACKGROUND_COLOR,
+            hover_color = params.hover_color or UI_HOVER_COLOR,
+            press_color = params.press_color or UI_PRESS_COLOR,
+            click_function = clickFunctionName,
+            function_owner = self,
+        }
+        object.createButton(counter.minusButton.params)
+
+        local clickFunctionName = counter.plusButton.id.."_OnClick"
+        self.setVar(clickFunctionName, function(_, _, altClick)
+            counter.onValueChanged(altClick and 10 or 1)
+        end)
+        local index = Ui_RecordButtonAndGetIndex(object)
+        counter.plusButton.params = {
+            index = index,
+            position = { x = -Util.Lerp(tl.x, br.x, 0.75), y = params.y or UI_Y, z = y },
+            scale = { x = scale, y = scale, z = scale },
+            width = width / 2,
+            height = height,
+            color = params.color or UI_BACKGROUND_COLOR,
+            hover_color = params.hover_color or UI_HOVER_COLOR,
+            press_color = params.press_color or UI_PRESS_COLOR,
+            click_function = clickFunctionName,
+            function_owner = self,
+        }
+        object.createButton(counter.plusButton.params)
+    end
 
     return counter
 end
