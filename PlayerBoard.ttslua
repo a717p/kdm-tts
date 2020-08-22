@@ -31,6 +31,10 @@ PlayerBoard.AFFINITIES = {
     Blue = {63/255, 153/255, 209/255, 1},
 }
 
+PlayerBoard.SPECIAL_EFFECT_CARDS = {
+    ["Iridescent Hide"] = true,
+}
+
 PlayerBoard.TOKEN_STATS = {
     ["Movement Token"] = "movement",
     ["Speed Token"] = "speed",
@@ -854,6 +858,18 @@ end
 
 ---------------------------------------------------------------------------------------------------
 
+function PlayerBoard.UpdateSpecialCards(playerBoard)
+    local playerNumber = playerBoard:Number()
+    for _, object in ipairs(Zone.Objects("Player "..playerNumber.." Cards")) do
+        if PlayerBoard.SPECIAL_EFFECT_CARDS[object.getName()] == true then
+            PlayerBoard.OnObjectPickedUpFromCards(playerBoard, object)
+            PlayerBoard.OnObjectDroppedOnCards(playerBoard, object)
+        end
+    end
+end
+
+---------------------------------------------------------------------------------------------------
+
 function PlayerBoard.OnObjectDroppedOnCards(playerBoard, object)
     local name = object.GetName()
 
@@ -861,11 +877,10 @@ function PlayerBoard.OnObjectDroppedOnCards(playerBoard, object)
         return
     end
 
-    local specialArmorCards = {["Iridescent Hide"] = true}
     local armorStats = {}
     local armorName = object.getName()
 
-    if specialArmorCards[armorName] == true then
+    if PlayerBoard.SPECIAL_EFFECT_CARDS[armorName] == true then
         if (armorName == "Iridescent Hide") then
             local armor = 0
             for color,_ in pairs(PlayerBoard.AFFINITIES) do
@@ -1148,6 +1163,7 @@ function PlayerBoard.PostInit()
     EventManager.AddHandler("onObjectEnterContainer", PlayerBoard.OnObjectEnterContainer)
     EventManager.AddHandler("onObjectDestroy", PlayerBoard.OnObjectDestroy)
     EventManager.AddHandler("onSurvivorStatChange", PlayerBoard.OnSurvivorChangeStat)
+    EventManager.AddHandler("onAffinityChange", PlayerBoard.UpdateSpecialCards)
 end
 
 ---------------------------------------------------------------------------------------------------
