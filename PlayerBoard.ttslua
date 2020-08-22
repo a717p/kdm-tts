@@ -289,6 +289,7 @@ function PlayerBoardClass.AddAffinity(playerBoard, color, value)
     local newAffinity = Util.Clamp(playerBoard[color.."Affinity"] + value, 0, 10)
     playerBoard[color.."Affinity"] = newAffinity
     playerBoard[color.."AffinityCounter"]:Set(newAffinity)
+    EventManager.FireEvent("onAffinityChange", playerBoard)
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -860,7 +861,25 @@ function PlayerBoard.OnObjectDroppedOnCards(playerBoard, object)
         return
     end
 
-    local armorStats = Armor.Get(object.getName())
+    local specialArmorCards = {["Iridescent Hide"] = true}
+    local armorStats = {}
+    local armorName = object.getName()
+
+    if specialArmorCards[armorName] == true then
+        if (armorName == "Iridescent Hide") then
+            local armor = 0
+            for color,_ in pairs(PlayerBoard.AFFINITIES) do
+                local field = color.."Affinity"
+                if (playerBoard[field] >= 1) then
+                    armor = armor + 1
+                end
+            end
+            armorStats =  { head = armor, arms = armor, body = armor, waist = armor, legs = armor, modifier = true }
+        end
+    else
+        armorStats = Armor.Get(armorName)
+    end
+
     if armorStats and not playerBoard.linkedArmor[object] then
         Log.Debugf("Linking armor %s (%s) to %s with armor {%d, %d, %d, %d, %d}", object.getName(), object.getGUID(), playerBoard.object.getName(), armorStats.head, armorStats.arms, armorStats.body, armorStats.waist, armorStats.legs)
         playerBoard.linkedArmor[object] = armorStats
