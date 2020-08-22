@@ -25,6 +25,12 @@ PlayerBoard.ARMOR_LOCATIONS = { "head", "arms", "body", "waist", "legs" }
 PlayerBoard.HEAVY_INJURY_LOCATIONS = { "head", "arms", "body", "waist", "legs" }
 PlayerBoard.LIGHT_INJURY_LOCATIONS = { "arms", "body", "waist", "legs" }
 
+PlayerBoard.AFFINITIES = {
+    Red = {204/255, 28/255, 35/255, 1},
+    Green = {77/255, 189/255, 56/255, 1},
+    Blue = {63/255, 153/255, 209/255, 1},
+}
+
 PlayerBoard.TOKEN_STATS = {
     ["Movement Token"] = "movement",
     ["Speed Token"] = "speed",
@@ -97,6 +103,11 @@ function PlayerBoard.Create(playerNumber, object, saveState)
     for _, hitLocation in ipairs(PlayerBoard.HEAVY_INJURY_LOCATIONS) do
         local inj = hitLocation.."HeavyInjury"
         playerBoard[inj] = saveState[inj]
+    end
+
+    for color,_ in pairs(PlayerBoard.AFFINITIES) do
+        local affinity = color.."Affinity"
+        playerBoard[affinity] = saveState[affinity] or 0
     end
 
     if saveState.figurineGuid then
@@ -179,6 +190,20 @@ function PlayerBoard.Create(playerNumber, object, saveState)
         playerBoard:PackSurvivorBox()
     end})
 
+    -- add affinity counters
+    topLeft.x = 0.07
+    topLeft.y = -0.425
+    bottomRight.x = 0
+    bottomRight.y = -0.495
+    for color, rgb in pairs(PlayerBoard.AFFINITIES) do
+        local value = playerBoard[color.."Affinity"]
+        playerBoard[color.."AffinityCounter"] = Ui.Counter({ object = object, id = "Affinity" .. color, topLeft = topLeft, bottomRight = bottomRight, scale = 0.07, value = value, counterStyle = 1, color = rgb, font_size = 500, font_color = { r = 0.271, g = 0.22, b = 0.141, a = 100 }, onValueChanged = function(delta)
+            playerBoard:AddAffinity(color, delta)
+        end})
+        topLeft.y = topLeft.y + 0.08
+        bottomRight.y = bottomRight.y + 0.08
+    end
+
     return playerBoard
 end
 
@@ -203,6 +228,11 @@ function PlayerBoardClass.Save(playerBoard)
 
     for _, hitLocation in ipairs(PlayerBoard.HEAVY_INJURY_LOCATIONS) do
         local field = hitLocation.."HeavyInjury"
+        saveState[field] = playerBoard[field]
+    end
+
+    for color,_ in pairs(PlayerBoard.AFFINITIES) do
+        local field = color.."Affinity"
         saveState[field] = playerBoard[field]
     end
 
@@ -249,6 +279,16 @@ function PlayerBoardClass.AddArmor(playerBoard, hitLocation, temporaryArmor, gea
     if (oldTemporaryArmor + oldGearArmor) != (newTemporaryArmor + newGearArmor) then
         playerBoard[hitLocation.."ArmorCounter"]:Set(newTemporaryArmor + newGearArmor)
     end
+end
+
+---------------------------------------------------------------------------------------------------
+
+function PlayerBoardClass.AddAffinity(playerBoard, color, value)
+    Log.Debugf("Adding %d %s affinity to %s", value, color, playerBoard.object.getName())
+
+    local newAffinity = Util.Clamp(playerBoard[color.."Affinity"] + value, 0, 10)
+    playerBoard[color.."Affinity"] = newAffinity
+    playerBoard[color.."AffinityCounter"]:Set(newAffinity)
 end
 
 ---------------------------------------------------------------------------------------------------
