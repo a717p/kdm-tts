@@ -22,6 +22,7 @@ local Timeline = require("Kdm/Timeline")
 local Setup = require("Kdm/Setup")
 local Showdown = require("Kdm/Showdown")
 local Hunt = require("Kdm/Hunt")
+local ConstellationSheet = require("Kdm/ConstellationSheet")
 local BattleUi = require("Kdm/BattleUi")
 local MessageBox = require("Kdm/MessageBox")
 local GlobalUi = require("Kdm/GlobalUi")
@@ -52,6 +53,7 @@ function onSave()
         Setup = Setup.Save(),
         Showdown = Showdown.Save(),
         BattleUi = BattleUi.Save(),
+        ConstellationSheet = ConstellationSheet.Save(),
     }
 
     return JSON.encode(saveState)
@@ -84,6 +86,7 @@ function onLoad(saveJson)
         ["Setup"] = Setup,
         ["Showdown"] = Showdown,
         ["Hunt"] = Hunt,
+        ["ConstellationSheet"] = ConstellationSheet,
         ["BattleUi"] = BattleUi,
         ["GlobalUi"] = GlobalUi,
         ["MessageBox"] = MessageBox,

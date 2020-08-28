@@ -1,0 +1,165 @@
+require("Kdm/Check")
+local Log = require("Kdm/Log").ForPackage("ConstellationSheet")
+local Util = require("Kdm/Util")
+local Ui = require("Kdm/Ui3d")
+local EventManager = require("Kdm/EventManager")
+
+local ConstellationSheet = {}
+ConstellationSheet.__index = ConstellationSheet
+ConstellationSheet.sheetsOnTable = {}
+ConstellationSheet.constellationGrid = {
+    {"", "Witch", "Rust", "Storm", "Reaper"},
+    {"Gambler", "Understanding", "Destined", "FatedBlow", "Pristine"},
+    {"Absolute", "Reincarnated", "FrozenStar", "IridescentHide", "ChampionsRite"},
+    {"Sculptor", "Scar", "Noble", "WeaponMastery", "Accuracy"},
+    {"Goblin", "OraclesEye", "Unbreakable", "Strength", "Courage"},
+}
+
+ConstellationSheet.GUID = "4d5fb7"
+ConstellationSheet.NAME = "ConstellationSheet"
+ConstellationSheet.OBJECT_NAME = "Constellations Reference"
+ConstellationSheet.CELL_SIZE = {x = 0.5033, y = 0.2489}
+ConstellationSheet.CELL_GAP = {x = 0.023, y = 0.018}
+
+---------------------------------------------------------------------------------------------------
+
+function ConstellationSheet.Create(object)
+    local constellationSheet = {
+        tag = "Constellation Sheet",
+        object = object,
+        ui = {},
+        traits = {},
+    }
+    setmetatable(constellationSheet, ConstellationSheet)
+
+    local markers = object.getDecals()
+
+    if (markers ~= nil) then
+        for i, marker in ipairs(markers) do
+            constellationSheet.traits[marker.name] = true
+        end
+    end
+
+    return constellationSheet
+end
+
+---------------------------------------------------------------------------------------------------
+
+function ConstellationSheet.buildUi(object)
+    if object.getName() == ConstellationSheet.OBJECT_NAME then
+        ConstellationSheet.addToTable(object)
+        local sheet =  ConstellationSheet.Create(object)
+        local gapX = 0.023
+        local gapY = 0.018
+        local xStart = 1.31
+
+        for row, fullRow in ipairs(ConstellationSheet.constellationGrid) do
+            local y = -0.463 + (row - 1) * ConstellationSheet.CELL_SIZE.y + (row - 1) * gapY
+
+            for col, name in ipairs(fullRow) do
+                if not (row == 1 and col == 1) then
+
+                    local topLeft = { x = xStart - ((col - 1) * ConstellationSheet.CELL_SIZE.x) - ((col - 1) * gapX), y = y }
+                    local bottomRight = { x = topLeft.x - ConstellationSheet.CELL_SIZE.x , y = y + ConstellationSheet.CELL_SIZE.y }
+                    local trait = "Constellation"..name
+
+                    sheet.ui["ConstellationCheckbox"..name] = Ui.CheckBox({ object = sheet:Object(), id = trait, topLeft = topLeft, bottomRight = bottomRight, scale = 0.075, checked = false, onClick = function()
+                        checked = not sheet.traits[trait]
+                        sheet.traits[trait] = checked
+
+                        if (checked == true) then
+                            sheet:addMarker(trait, topLeft)
+                        else
+                            sheet:removeMarker(trait)
+                        end
+                    end })
+                end
+            end
+        end
+    end
+end
+
+---------------------------------------------------------------------------------------------------
+
+function ConstellationSheet.Init(modules, saveState, expansions)
+    saveState = saveState or {}
+    ConstellationSheet.initSaveState(saveState)
+
+    local sheet = nil
+    for guid, _ in pairs(ConstellationSheet.sheetsOnTable) do
+        sheet = getObjectFromGUID(guid)
+        ConstellationSheet.buildUi(sheet)
+
+        if guid == ConstellationSheet.GUID then
+            sheet.setLock(false)
+        end
+    end
+end
+
+function ConstellationSheet.initSaveState(saveState)
+    ConstellationSheet.sheetsOnTable = saveState
+end
+
+---------------------------------------------------------------------------------------------------
+
+function ConstellationSheet:Object() return self.object end
+
+---------------------------------------------------------------------------------------------------
+
+function ConstellationSheet:addMarker(name, position)
+    local parameters =
+    {
+        name     = name,
+        url      = "https://cdn.discordapp.com/attachments/724195702657253429/748926451709116446/decal_red.png",
+        position = {position.x - ConstellationSheet.CELL_SIZE.x / 2, 0.12, position.y + ConstellationSheet.CELL_SIZE.y / 2},
+        rotation = {90, 180, 0},
+        scale    = {0.5, 0.25, 0.25},
+    }
+    self:Object().addDecal(parameters)
+end
+
+function ConstellationSheet:removeMarker(name)
+    local allMarkers = self:Object().getDecals()
+
+    for index, marker in ipairs(allMarkers) do
+        if marker.name == name then
+            table.remove(allMarkers, index)
+            self:Object().setDecals(allMarkers)
+            return
+        end
+    end
+end
+
+---------------------------------------------------------------------------------------------------
+
+function ConstellationSheet.addToTable(object)
+    ConstellationSheet.sheetsOnTable[object.getGUID()] = true
+end
+
+function ConstellationSheet.removeFromTable(object)
+    if object.getName() == ConstellationSheet.OBJECT_NAME then
+        ConstellationSheet.sheetsOnTable[object.getGUID()] = nil
+    end
+end
+
+function ConstellationSheet.enterContainer(container, object)
+        ConstellationSheet.removeFromTable(object)
+end
+
+---------------------------------------------------------------------------------------------------
+
+function ConstellationSheet.PostInit()
+    EventManager.AddHandler("onObjectSpawn", ConstellationSheet.buildUi)
+    EventManager.AddHandler("onObjectDestroy", ConstellationSheet.removeFromTable)
+    EventManager.AddHandler("onObjectEnterContainer", ConstellationSheet.enterContainer)
+end
+
+---------------------------------------------------------------------------------------------------
+
+function ConstellationSheet.Save()
+    return ConstellationSheet.sheetsOnTable
+end
+
+---------------------------------------------------------------------------------------------------
+
+return ConstellationSheet
